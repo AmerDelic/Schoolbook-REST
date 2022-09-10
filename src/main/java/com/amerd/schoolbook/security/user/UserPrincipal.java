@@ -1,6 +1,7 @@
 package com.amerd.schoolbook.security.user;
 
 import com.amerd.schoolbook.domain.user.User;
+import com.amerd.schoolbook.security.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -15,7 +16,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return AuthorityUtils.createAuthorityList(user.getAuthorities());
+        return AuthorityUtils.createAuthorityList(Role.valueOf(user.getRole()).getAuthorities());
     }
 
     @Override

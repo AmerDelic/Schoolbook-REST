@@ -1,5 +1,6 @@
 package com.amerd.schoolbook.service.impl;
 
+import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
 import com.amerd.schoolbook.exception.UserExistsException;
 import com.amerd.schoolbook.exception.UserNotFoundException;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -77,6 +80,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public CustomPage<User> getAllUsersPaged(Pageable pageable) {
+        Page<User> usersPage = userRepository.findAll(pageable);
+        return new CustomPage<>(
+                usersPage.getContent(), pageable.getPageNumber(), usersPage.getTotalElements(), usersPage.getTotalPages());
     }
 
     private User save(User user) {

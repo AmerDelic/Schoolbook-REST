@@ -3,15 +3,17 @@ package com.amerd.schoolbook.resource;
 import com.amerd.schoolbook.common.constant.Endpoint;
 import com.amerd.schoolbook.common.constant.SecurityConstant;
 import com.amerd.schoolbook.common.response.CustomHttpResponse;
+import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
 import com.amerd.schoolbook.domain.user.dto.mapper.UserMapper;
-import com.amerd.schoolbook.exception.ExceptionHandling;
 import com.amerd.schoolbook.security.provider.JWTProvider;
 import com.amerd.schoolbook.security.user.UserPrincipal;
 import com.amerd.schoolbook.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(Endpoint.USER)
@@ -33,26 +33,26 @@ public class UserResource {
     private final AuthenticationManager authenticationManager;
     private final JWTProvider jwtProvider;
 
-    @GetMapping()
-    public ResponseEntity<CustomHttpResponse<List<User>>> getAll() {
-        List<User> users = userService.getAllUsers();
-        var response = new CustomHttpResponse<>(users, "All users");
-        return ResponseEntity.ok(response);
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CustomHttpResponse<CustomPage<User>>> getAll(Pageable pageable) {
+        CustomPage<User> users = userService.getAllUsersPaged(pageable);
+        return ResponseEntity.ok(new CustomHttpResponse<>(users, "All users"));
     }
 
-    @PostMapping("/new")
+    @PostMapping(value = "/new", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CustomHttpResponse<User>> create(@RequestBody User user) {
-        User user1 = userService.register(user.getFirstName(), user.getLastName(), user.getUsername(), user.getPassword(), user.getEmail());
-        return ResponseEntity.ok(new CustomHttpResponse<>(user1, "Created user"));
+        User newUser = userService.register(
+                user.getFirstName(), user.getLastName(), user.getUsername(), user.getPassword(), user.getEmail());
+        return ResponseEntity.ok(new CustomHttpResponse<>(newUser, "Created user"));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody User user) {
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CustomHttpResponse<User>> login(@RequestBody User user) {
         authenticate(user.getUsername(), user.getPassword());
         User loggedUser = userService.findByUsernameOrThrow(user.getUsername());
         UserPrincipal userPrincipal = new UserPrincipal(loggedUser);
         HttpHeaders jwtHeader = getJwtHeader(userPrincipal);
-        return new ResponseEntity<>(loggedUser, jwtHeader, HttpStatus.OK);
+        return new ResponseEntity<>(new CustomHttpResponse<>(loggedUser, "Logged in"), jwtHeader, HttpStatus.OK);
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal userPrincipal) {

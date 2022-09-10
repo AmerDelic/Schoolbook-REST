@@ -4,12 +4,11 @@ import com.amerd.schoolbook.domain.base.BaseEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -36,10 +35,9 @@ public class User extends BaseEntity {
     private String profileImageUrl;
     private LocalDateTime lastLoginDate;
     private LocalDateTime lastLoginDateDisplay;
-
     private String role;
+    @Transient
     private String[] authorities;
-
     @Column(columnDefinition = "boolean default true")
     private boolean isEnabled;
     @Column(columnDefinition = "boolean default false")
