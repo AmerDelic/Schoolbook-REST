@@ -2,7 +2,7 @@
 A Spring study project.
 
 
-** Database Setup ** 
+**Database Setup** 
 
 1) Install docker
 2) Get MySql image for docker: "sudo docker pull mysql"
@@ -17,7 +17,7 @@ You might want to access your DB via terminal using the following commands:
 You can check the IP address of a specific running container like so:
 sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-test-server
 
-** Application Setup **
+**Application Setup**
 
 In "...resources/application.properties" you need to set the following variables:
 * spring.datasource.url=${DB_URL}
@@ -27,3 +27,28 @@ In "...resources/application.properties" you need to set the following variables
 You could hardcode these, for example, replace '${DB_URL}' with 'jdbc:mysql://172.17.0.2/schoolbook', but what you 
 should do is create these three environment variables in the runtime configuration,
 so that 'DB_URL=jdbc:mysql://172.17.0.2/schoolbook'.
+
+**Creating a user** 
+
+* Endpoint: POST @ http://localhost:8081/sb/user/new
+* Request: 
+* {
+  "username": "john4",
+  "password": "psw",
+  "firstName": "John",
+  "lastName": "Elis",
+  "email": "john4@mail.com"
+  }
+
+**Logging in** 
+
+* Endpoint: POST @ http://localhost:8081/sb/user/login
+* Request:
+* {
+  "username": "john4",
+  "password": "psw"
+  }
+
+The response to a successful login request will contain a header 'Jwt-Token'. The content of this header
+needs to be taken and put in a 'Authorization' header and prefixed with 'Bearer ' for each subsequent request.
+The only other endpoint, at this time, is the 'get all users' endpoint: GET @ http://localhost:8081/sb/user.
