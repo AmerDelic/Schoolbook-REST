@@ -1,5 +1,6 @@
 package com.amerd.schoolbook.security.config;
 
+import com.amerd.schoolbook.common.constant.SecurityConstant;
 import com.amerd.schoolbook.security.filter.JWTAccessDeniedHandler;
 import com.amerd.schoolbook.security.filter.JWTAuthEntryPoint;
 import com.amerd.schoolbook.security.filter.JWTAuthFilter;
@@ -54,7 +55,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authorizeRequests().antMatchers("**").permitAll()
+                .authorizeRequests().antMatchers(SecurityConstant.PUBLIC_URLS).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().accessDeniedHandler(jwtAccessDeniedHandler)
