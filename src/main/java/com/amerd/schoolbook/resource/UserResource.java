@@ -6,6 +6,7 @@ import com.amerd.schoolbook.common.response.CustomHttpResponse;
 import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
 import com.amerd.schoolbook.domain.user.dto.mapper.UserMapper;
+import com.amerd.schoolbook.exception.ExceptionHandling;
 import com.amerd.schoolbook.security.provider.JWTProvider;
 import com.amerd.schoolbook.security.user.UserPrincipal;
 import com.amerd.schoolbook.service.UserService;
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(Endpoint.USER)
 @RequiredArgsConstructor
-public class UserResource {
+public class UserResource extends ExceptionHandling {
 
     private final UserMapper userMapper;
     private final UserService userService;
