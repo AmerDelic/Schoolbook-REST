@@ -23,7 +23,7 @@ In "...resources/application.properties" you need to set the following variables
 * spring.datasource.url=${DB_URL}
 * spring.datasource.username=${DB_USERNAME} 
 * spring.datasource.password=${DB_PASSWORD}
-* jwt.provider.secret==${JWT_PROV_SEC}
+* jwt.provider.secret=${JWT_PROV_SEC}
 
 You could hardcode these, for example, replace '${DB_URL}' with 'jdbc:mysql://172.17.0.2/schoolbook', but what you 
 should do is create these three environment variables in the run configuration,
