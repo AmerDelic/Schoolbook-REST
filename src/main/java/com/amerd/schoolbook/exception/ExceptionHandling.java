@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,6 +21,12 @@ import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
 @Slf4j
 @RestControllerAdvice
 public class ExceptionHandling {
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> badCredentialsException(BadCredentialsException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
 
     @ExceptionHandler(JWTDecodeException.class)
     public ResponseEntity<ErrorResponse> jWTDecodeException(JWTDecodeException ex) {
