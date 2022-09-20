@@ -1,4 +1,4 @@
-package com.amerd.schoolbook.service.impl;
+package com.amerd.schoolbook.service.user;
 
 import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
@@ -7,7 +7,7 @@ import com.amerd.schoolbook.exception.UserNotFoundException;
 import com.amerd.schoolbook.repo.UserRepository;
 import com.amerd.schoolbook.security.Role;
 import com.amerd.schoolbook.security.user.UserPrincipal;
-import com.amerd.schoolbook.service.UserService;
+import com.amerd.schoolbook.service.login.LoginAttemptService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -38,15 +38,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public static final String USER_IMAGE_PROFILE_TEMP = "/user/image/profile/temp";
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = findByUsernameOrThrow(username);
+        validateLoginAttempt(user);
         user.setLastLoginDateDisplay(user.getLastLoginDate());
         user.setLastLoginDate(LocalDateTime.now());
         user = userRepository.save(user);
         log.info("Found user [{}]", username);
         return new UserPrincipal(user);
+    }
+
+    private void validateLoginAttempt(User user) {
+        if (user.isNonLocked()) {
+            if (loginAttemptService.exceededMaxAttempts(user.getUsername())) {
+                user.setNonLocked(false);
+            }
+        } else {
+            loginAttemptService.evictUserFromLoginAttemptCache(user.getUsername());
+        }
     }
 
     @Override

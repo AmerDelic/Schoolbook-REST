@@ -1,4 +1,4 @@
-package com.amerd.schoolbook.service;
+package com.amerd.schoolbook.service.user;
 
 import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;

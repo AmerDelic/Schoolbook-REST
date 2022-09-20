@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.validation.ValidationException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
@@ -21,6 +23,18 @@ import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
 @Slf4j
 @RestControllerAdvice
 public class ExceptionHandling {
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorResponse> lockedException(LockedException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(ExecutionException.class)
+    public ResponseEntity<ErrorResponse> executionException(ExecutionException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> badCredentialsException(BadCredentialsException ex) {

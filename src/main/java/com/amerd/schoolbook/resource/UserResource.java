@@ -11,7 +11,7 @@ import com.amerd.schoolbook.domain.user.dto.mapper.UserMapper;
 import com.amerd.schoolbook.exception.ExceptionHandling;
 import com.amerd.schoolbook.security.provider.JWTProvider;
 import com.amerd.schoolbook.security.user.UserPrincipal;
-import com.amerd.schoolbook.service.UserService;
+import com.amerd.schoolbook.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
