@@ -12,7 +12,7 @@ public class NewUserDto {
     private String username;
     @NotNull(message = "Password is required")
     private String password;
-    @Email
+    @Email(message = "Must be a well formed email")
     @NotNull(message = "Valid email is required")
     private String email;
     private String firstName;

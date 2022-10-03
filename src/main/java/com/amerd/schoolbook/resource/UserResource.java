@@ -11,6 +11,7 @@ import com.amerd.schoolbook.domain.user.dto.mapper.UserMapper;
 import com.amerd.schoolbook.exception.ExceptionHandling;
 import com.amerd.schoolbook.security.provider.JWTProvider;
 import com.amerd.schoolbook.security.user.UserPrincipal;
+import com.amerd.schoolbook.service.mail.EmailService;
 import com.amerd.schoolbook.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class UserResource extends ExceptionHandling {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JWTProvider jwtProvider;
+    private final EmailService emailService;
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CustomHttpResponse<CustomPage<User>>> getAll(Pageable pageable) {
@@ -51,7 +53,12 @@ public class UserResource extends ExceptionHandling {
         User newUser = userService.register(
                 newUserDto.getFirstName(), newUserDto.getLastName(), newUserDto.getUsername(), newUserDto.getPassword(),
                 newUserDto.getEmail());
-        return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(newUser), "Created user"));
+        String emailResponse = emailService
+                .subject("Welcome!")
+                .emailBody("Welcome to the app :)")
+                .recipient(newUser.getEmail())
+                .sendNewPasswordEmail();
+        return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(newUser), emailResponse));
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
