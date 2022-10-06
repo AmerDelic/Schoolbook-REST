@@ -8,6 +8,7 @@ import com.amerd.schoolbook.repo.UserRepository;
 import com.amerd.schoolbook.security.Role;
 import com.amerd.schoolbook.security.user.UserPrincipal;
 import com.amerd.schoolbook.service.login.LoginAttemptService;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -23,8 +24,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -62,6 +70,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    public User findByIdOrThrow(Long id) {
+        return userRepository.findById(id).orElseThrow(
+                () -> new UserNotFoundException(String.format("User of id=[%d] not found", id)));
+    }
+
+    @Override
     public User findByUsernameOrThrow(String username) {
         return userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(String.format("User [%s] not found", username)));
@@ -86,7 +100,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         newUser.setRole(Role.ROLE_USER.name());
         newUser.setAuthorities(Role.ROLE_USER.getAuthorities());
         newUser.setProfileImageUrl(getTemporaryImgUrl());
-        return save(validateUser(newUser));
+        return save(validateNewUser(newUser));
     }
 
     @Override
@@ -101,6 +115,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 usersPage.getContent(), pageable.getPageNumber(), usersPage.getTotalElements(), usersPage.getTotalPages());
     }
 
+    @Override
+    public User update(Long id, JsonNode userUpdate) {
+        User user = findByIdOrThrow(id);
+        Field[] fieldsArray = User.class.getDeclaredFields();
+        Method[] methodsArray = User.class.getDeclaredMethods();
+        Predicate<String> updateHasField = userUpdate::hasNonNull;
+        List<String> fields = Arrays.stream(fieldsArray).map(Field::getName).filter(updateHasField).collect(Collectors.toList());
+        Consumer<String> updateFunction = (field) -> Arrays.stream(methodsArray).forEach((method -> {
+            if (method.getName().startsWith("set") && method.getName().substring(3).equalsIgnoreCase(field)) {
+                try {
+                    method.invoke(user, userUpdate.get(field).asText());
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }));
+        fields.forEach(updateFunction);
+        if (fields.contains("password")) user.setPassword(encodePassword(user.getPassword()));
+        return save(user);
+    }
+
     private User save(User user) {
         return getUserRepository().save(user);
     }
@@ -113,7 +148,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return passwordEncoder.encode(password);
     }
 
-    private User validateUser(User user) {
+    private User validateNewUser(User user) {
         if (userRepository.findUserByUsername(user.getUsername()).isPresent()) {
             throw new UserExistsException(String.format("Username '%s' already in use", user.getUsername()));
         }
@@ -122,5 +157,4 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
         return user;
     }
-
 }

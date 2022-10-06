@@ -22,14 +22,17 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import javax.validation.ValidationException;
+import java.lang.reflect.InvocationTargetException;
 
 @RestController
 @RequestMapping(Endpoint.USER)
@@ -50,14 +53,16 @@ public class UserResource extends ExceptionHandling {
 
     @PostMapping(value = "/new", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CustomHttpResponse<UserResponseDto>> create(@Valid @RequestBody NewUserDto newUserDto) {
+        String username = newUserDto.getUsername();
+        String firstName = newUserDto.getFirstName();
+        String email = newUserDto.getEmail();
         User newUser = userService.register(
-                newUserDto.getFirstName(), newUserDto.getLastName(), newUserDto.getUsername(), newUserDto.getPassword(),
-                newUserDto.getEmail());
+                firstName, newUserDto.getLastName(), newUserDto.getUsername(), newUserDto.getPassword(), email);
         String emailResponse = emailService
                 .subject("Welcome!")
-                .emailBody("Welcome to the app :)")
+                .emailBody(String.format("Welcome to the app %s", StringUtils.hasText(firstName) ? firstName : username))
                 .recipient(newUser.getEmail())
-                .sendNewPasswordEmail();
+                .sendEmail();
         return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(newUser), emailResponse));
     }
 
@@ -73,6 +78,16 @@ public class UserResource extends ExceptionHandling {
         HttpHeaders jwtHeader = getJwtHeader(userPrincipal);
         return new ResponseEntity<>(new CustomHttpResponse<>(
                 userMapper.toResponseDto(loggedUser), "Logged in"), jwtHeader, HttpStatus.OK);
+    }
+
+    @PutMapping
+    public ResponseEntity<CustomHttpResponse<UserResponseDto>> edit(@RequestBody JsonNode userUpdate)
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+        if (!userUpdate.hasNonNull("id")) throw new ValidationException("User id missing");
+        Long id = userUpdate.get("id").asLong();
+        User updatedUser = userService.update(id, userUpdate);
+        return new ResponseEntity<>(new CustomHttpResponse<>(
+                userMapper.toResponseDto(updatedUser), String.format("User [%d] updated", id)), HttpStatus.OK);
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal userPrincipal) {

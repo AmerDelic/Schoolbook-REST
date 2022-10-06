@@ -36,7 +36,7 @@ public class EmailService {
         this.startTls = startTls;
     }
 
-    public String sendNewPasswordEmail() {
+    public String sendEmail() {
         if (emailContentsValid()) return sendSimpleMail();
         log.info("\n\n\t * WARNING * Failed to send new user email -- elements missing\n");
         return "Failed to send email";
