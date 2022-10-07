@@ -5,6 +5,7 @@ import com.amerd.schoolbook.domain.user.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.data.domain.Pageable;
 
+import javax.validation.constraints.Email;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -23,4 +24,8 @@ public interface UserService {
     CustomPage<User> getAllUsersPaged(Pageable pageable);
 
     User update(Long id, JsonNode userUpdate) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException;
+
+    String resetPassword(@Email String email);
+
+    void delete(Long id);
 }

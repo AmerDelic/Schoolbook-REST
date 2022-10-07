@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
@@ -88,6 +89,17 @@ public class UserResource extends ExceptionHandling {
         User updatedUser = userService.update(id, userUpdate);
         return new ResponseEntity<>(new CustomHttpResponse<>(
                 userMapper.toResponseDto(updatedUser), String.format("User [%d] updated", id)), HttpStatus.OK);
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<CustomHttpResponse<String>> resetPassword(@RequestParam String email) {
+        String newPassword = userService.resetPassword(email);
+        String emailResponse = emailService
+                .subject("Password Reset")
+                .emailBody(String.format("Your new password is: %s", newPassword))
+                .recipient(email)
+                .sendEmail();
+        return ResponseEntity.ok(new CustomHttpResponse<>("Password reset", emailResponse));
     }
 
     private HttpHeaders getJwtHeader(UserPrincipal userPrincipal) {

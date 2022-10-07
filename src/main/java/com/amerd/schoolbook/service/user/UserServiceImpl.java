@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.CharacterPredicates;
+import org.apache.commons.text.RandomStringGenerator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +23,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
+import javax.validation.constraints.Email;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +38,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@Validated
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -132,8 +137,26 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             }
         }));
         fields.forEach(updateFunction);
-        if (fields.contains("password")) user.setPassword(encodePassword(user.getPassword()));
+        if (fields.contains(User.Fields.password)) user.setPassword(encodePassword(user.getPassword()));
         return save(user);
+    }
+
+    @Override
+    public String resetPassword(@Email String email) {
+        User user = findByEmailOrThrow(email);
+        String newPassword = new RandomStringGenerator.Builder()
+                .withinRange('0', 'z')
+                .filteredBy(CharacterPredicates.DIGITS, CharacterPredicates.LETTERS)
+                .build().generate(10);
+        user.setPassword(encodePassword(newPassword));
+        save(user);
+        return newPassword;
+    }
+
+    @Override
+    public void delete(Long id) {
+        User user = findByIdOrThrow(id);
+        userRepository.delete(user);
     }
 
     private User save(User user) {
