@@ -111,8 +111,4 @@ public class UserResource extends ExceptionHandling {
     private void authenticate(String username, String password) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
-
-    private void doNothing() {
-        System.out.println("doing nothing");
-    }
 }
