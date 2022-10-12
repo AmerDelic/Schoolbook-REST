@@ -12,26 +12,30 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"username", "email"})})
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"username", "email"}),
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "username")
+})
 @NoArgsConstructor
 @FieldNameConstants
 public class User extends BaseEntity {
 
-    @NotNull(message = "Username must not be null")
+    @NotBlank(message = "Username must not be null or blank")
     private String username;
-    @NotNull(message = "Password must not be null")
+    @NotBlank(message = "Password must not be null or blank")
     private String password;
     private String publicId;
     private String firstName;
     private String lastName;
-    @NotNull(message = "Email must not be null")
-    @Email
+    @NotBlank(message = "Email must not be null or blank")
+    @Email(message = "Email must a well formed email address")
     @Column(nullable = false)
     private String email;
     private String profileImageUrl;

@@ -15,6 +15,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +25,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.transaction.Transactional;
+import javax.validation.ValidationException;
 import javax.validation.constraints.Email;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,6 +37,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -93,6 +97,33 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public CustomPage<User> getAllUsersPaged(Pageable pageable) {
+        Page<User> usersPage = userRepository.findAll(pageable);
+        return new CustomPage<>(
+                usersPage.getContent(), pageable.getPageNumber(), usersPage.getTotalElements(), usersPage.getTotalPages());
+    }
+
+    @Override
+    public User addNewUser(String firstName, String lastName, String username, String email, String role,
+                           boolean isNonLocked, boolean isEnabled, MultipartFile profileImage) {
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setRole(role);
+        user.setEnabled(isEnabled);
+        user.setNonLocked(isNonLocked);
+        //  user.setProfileImageUrl();
+        return null;
+    }
+
+    @Override
     public User register(String firstName, String lastName, String username, String password, String email) {
         User newUser = new User();
         newUser.setFirstName(firstName);
@@ -109,24 +140,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public CustomPage<User> getAllUsersPaged(Pageable pageable) {
-        Page<User> usersPage = userRepository.findAll(pageable);
-        return new CustomPage<>(
-                usersPage.getContent(), pageable.getPageNumber(), usersPage.getTotalElements(), usersPage.getTotalPages());
-    }
-
-    @Override
     public User update(Long id, JsonNode userUpdate) {
+        validateUserUpdate(userUpdate);
         User user = findByIdOrThrow(id);
         Field[] fieldsArray = User.class.getDeclaredFields();
         Method[] methodsArray = User.class.getDeclaredMethods();
         Predicate<String> updateHasField = userUpdate::hasNonNull;
-        List<String> fields = Arrays.stream(fieldsArray).map(Field::getName).filter(updateHasField).collect(Collectors.toList());
+        List<String> fields = Arrays.stream(fieldsArray)
+                .map(Field::getName)
+                .filter(updateHasField)
+                .collect(Collectors.toList());
         Consumer<String> updateFunction = (field) -> Arrays.stream(methodsArray).forEach((method -> {
             if (method.getName().startsWith("set") && method.getName().substring(3).equalsIgnoreCase(field)) {
                 try {
@@ -142,15 +165,25 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
+    public User updateProfileImage(Long id, MultipartFile profileImage) {
+        return null;
+    }
+
+    @Override
     public String resetPassword(@Email String email) {
         User user = findByEmailOrThrow(email);
-        String newPassword = new RandomStringGenerator.Builder()
-                .withinRange('0', 'z')
-                .filteredBy(CharacterPredicates.DIGITS, CharacterPredicates.LETTERS)
-                .build().generate(10);
+        String newPassword = generatePassword();
         user.setPassword(encodePassword(newPassword));
         save(user);
         return newPassword;
+    }
+
+    @NotNull
+    private static String generatePassword() {
+        return new RandomStringGenerator.Builder()
+                .withinRange('0', 'z')
+                .filteredBy(CharacterPredicates.DIGITS, CharacterPredicates.LETTERS)
+                .build().generate(10);
     }
 
     @Override
@@ -179,5 +212,20 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             throw new UserExistsException(String.format("Email '%s' already in use", user.getEmail()));
         }
         return user;
+    }
+
+    private void validateUserUpdate(JsonNode update) {
+        if (update.hasNonNull(User.Fields.username)) {
+            String newUsername = update.get(User.Fields.username).asText();
+            if (newUsername.isBlank()) throw new ValidationException("Username cannot be blank");
+            Optional<User> user = getUserRepository().findUserByUsername(newUsername);
+            if (user.isPresent()) throw new ValidationException("Username already in use");
+        }
+        if (update.hasNonNull(User.Fields.email)) {
+            String newEmail = update.get(User.Fields.email).asText();
+            if (newEmail.isBlank()) throw new ValidationException("Email cannot be blank");
+            Optional<User> user = getUserRepository().findUserByEmail(newEmail);
+            if (user.isPresent()) throw new ValidationException("Email already in use");
+        }
     }
 }

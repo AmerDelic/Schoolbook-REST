@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -23,6 +24,14 @@ import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
 @Slf4j
 @RestControllerAdvice
 public class ExceptionHandling {
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> constraintViolationException(ConstraintViolationException ex) {
+        log.error("", ex);
+        StringBuilder stringBuilder = new StringBuilder();
+        ex.getConstraintViolations().forEach(constraintViolation -> stringBuilder.append(constraintViolation.getMessage()));
+        return createErrorResponse(HttpStatus.BAD_REQUEST, stringBuilder.toString());
+    }
 
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ErrorResponse> lockedException(LockedException ex) {
