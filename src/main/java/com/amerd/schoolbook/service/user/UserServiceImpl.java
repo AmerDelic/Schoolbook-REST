@@ -2,13 +2,16 @@ package com.amerd.schoolbook.service.user;
 
 import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
+import com.amerd.schoolbook.domain.user.UserSetter;
 import com.amerd.schoolbook.exception.UserExistsException;
 import com.amerd.schoolbook.exception.UserNotFoundException;
 import com.amerd.schoolbook.repo.UserRepository;
 import com.amerd.schoolbook.security.Role;
 import com.amerd.schoolbook.security.user.UserPrincipal;
 import com.amerd.schoolbook.service.login.LoginAttemptService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -32,14 +35,11 @@ import javax.transaction.Transactional;
 import javax.validation.ValidationException;
 import javax.validation.constraints.Email;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Validated
@@ -56,6 +56,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
+
+    private final ObjectMapper mapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -141,25 +143,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public User update(Long id, JsonNode userUpdate) {
+        Map<String, String> updates = mapper.convertValue(userUpdate, new TypeReference<>() {
+        });
         validateUserUpdate(userUpdate);
         User user = findByIdOrThrow(id);
         Field[] fieldsArray = User.class.getDeclaredFields();
-        Method[] methodsArray = User.class.getDeclaredMethods();
-        Predicate<String> updateHasField = userUpdate::hasNonNull;
         List<String> fields = Arrays.stream(fieldsArray)
                 .map(Field::getName)
-                .filter(updateHasField)
+                .filter(userUpdate::hasNonNull)
                 .collect(Collectors.toList());
-        Consumer<String> updateFunction = (field) -> Arrays.stream(methodsArray).forEach((method -> {
-            if (method.getName().startsWith("set") && method.getName().substring(3).equalsIgnoreCase(field)) {
-                try {
-                    method.invoke(user, userUpdate.get(field).asText());
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }));
-        fields.forEach(updateFunction);
+        fields.forEach(field -> UserSetter.valueOf(field).setFieldValue(user, updates));
         if (fields.contains(User.Fields.password)) user.setPassword(encodePassword(user.getPassword()));
         return save(user);
     }

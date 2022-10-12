@@ -18,11 +18,8 @@ public class UserResponseDto {
     private String profileImageUrl;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime lastModifiedDate;
-
     private LocalDateTime lastLoginDate;
-
     private LocalDateTime lastLoginDateDisplay;
 
     private String role;
