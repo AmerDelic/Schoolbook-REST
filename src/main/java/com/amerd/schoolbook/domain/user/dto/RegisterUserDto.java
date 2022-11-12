@@ -6,7 +6,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class NewUserDto {
+public class RegisterUserDto {
 
     @NotNull(message = "Username is required")
     private String username;

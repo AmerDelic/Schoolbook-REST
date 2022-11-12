@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.LockedException;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,18 @@ public class ExceptionHandling {
         StringBuilder stringBuilder = new StringBuilder();
         ex.getConstraintViolations().forEach(constraintViolation -> stringBuilder.append(constraintViolation.getMessage()));
         return createErrorResponse(HttpStatus.BAD_REQUEST, stringBuilder.toString());
+    }
+
+    @ExceptionHandler(NoSuchMethodError.class)
+    public ResponseEntity<ErrorResponse> noSuchMethodError(NoSuchMethodError ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> entityNotFoundException(EntityNotFoundException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(LockedException.class)
@@ -81,11 +96,16 @@ public class ExceptionHandling {
         return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> httpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.BAD_REQUEST, "Parse error");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
         log.error("", ex);
-        List<String> messages = ex.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+        List<String> messages = ex.getAllErrors().stream().map(er -> Optional.ofNullable(er.getDefaultMessage()).orElse("")).toList();
         return createErrorResponse(HttpStatus.BAD_REQUEST, String.valueOf(messages));
     }
 

@@ -7,14 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.Email;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public interface UserService {
 
-    User addNewUser(
-            String firstName, String lastName, String username, String email, String role,
-            boolean isNonLocked, boolean isActive, MultipartFile profileImage);
+    User create(JsonNode request) throws IOException;
 
     User findByIdOrThrow(Long id);
 
@@ -22,17 +21,19 @@ public interface UserService {
 
     User findByEmailOrThrow(String email);
 
-    User register(String firstName, String lastName, String username, String password, String email);
+    User register(JsonNode request) throws IOException;
 
     List<User> getAllUsers();
 
     CustomPage<User> getAllUsersPaged(Pageable pageable);
 
-    User update(Long id, JsonNode userUpdate) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException;
+    User update(String username, JsonNode userUpdate) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException;
 
     String resetPassword(@Email String email);
 
-    User updateProfileImage(Long id, MultipartFile profileImage);
+    String delete(Long id);
 
-    void delete(Long id);
+    User updateProfileImage(String username, MultipartFile profileImage) throws IOException;
+
+    byte[] getProfileImage(String username) throws IOException;
 }

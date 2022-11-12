@@ -14,8 +14,5 @@ import org.springframework.stereotype.Component;
         unmappedSourcePolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
 
-
     UserResponseDto toResponseDto(User user);
-
-
 }
