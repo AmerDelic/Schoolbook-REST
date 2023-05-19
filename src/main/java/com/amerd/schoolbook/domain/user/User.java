@@ -9,7 +9,6 @@ import lombok.experimental.FieldNameConstants;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -42,8 +41,6 @@ public class User extends BaseEntity {
     private LocalDateTime lastLoginDate;
     private LocalDateTime lastLoginDateDisplay;
     private String role;
-    @Transient
-    private String[] authorities;
     @Column(columnDefinition = "boolean default true")
     private boolean isEnabled;
     @Column(columnDefinition = "boolean default false")

@@ -2,7 +2,6 @@ package com.amerd.schoolbook.exception;
 
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,7 +19,6 @@ import javax.validation.ValidationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
 

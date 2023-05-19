@@ -2,18 +2,22 @@ package com.amerd.schoolbook.service.user;
 
 import com.amerd.schoolbook.common.response.CustomPage;
 import com.amerd.schoolbook.domain.user.User;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.amerd.schoolbook.domain.user.dto.UserCreationDto;
+import com.amerd.schoolbook.domain.user.dto.UserRegistrationDto;
+import com.amerd.schoolbook.domain.user.dto.UserResponseDto;
+import com.amerd.schoolbook.domain.user.dto.UserUpdateDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.Email;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 public interface UserService {
 
-    User create(JsonNode request) throws IOException;
+    User create(UserCreationDto dto) throws IOException;
+
+    User save(User user);
 
     User findByIdOrThrow(Long id);
 
@@ -21,13 +25,11 @@ public interface UserService {
 
     User findByEmailOrThrow(String email);
 
-    User register(JsonNode request) throws IOException;
+    User register(UserRegistrationDto dto) throws IOException;
 
-    List<User> getAllUsers();
+    CustomPage<UserResponseDto> getAllUsersPaged(Pageable pageable);
 
-    CustomPage<User> getAllUsersPaged(Pageable pageable);
-
-    User update(String username, JsonNode userUpdate) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException;
+    User update(String username, UserUpdateDto dto) throws IOException;
 
     String resetPassword(@Email String email);
 

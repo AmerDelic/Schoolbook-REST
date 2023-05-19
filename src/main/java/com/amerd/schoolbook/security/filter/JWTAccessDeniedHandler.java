@@ -22,7 +22,7 @@ public class JWTAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
             throws IOException {
         ResponseEntity<String> responseEntity =
-                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ACCESS_DENIED_MESSAGE);
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(ACCESS_DENIED_MESSAGE);
         try (OutputStream outputStream = response.getOutputStream()) {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
