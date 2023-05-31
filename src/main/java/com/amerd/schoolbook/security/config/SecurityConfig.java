@@ -18,9 +18,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.amerd.schoolbook.common.constant.SecurityConstant.JWT_TOKEN_HEADER;
 
 @Configuration
 @EnableWebSecurity
@@ -47,12 +50,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .cors().configurationSource(request -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();
+                    UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
                     corsConfiguration.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost:4200"));
                     corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
-                    corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
-                    corsConfiguration.setExposedHeaders(List.of("Authorization"));
+                    corsConfiguration.setAllowedHeaders(List.of(JWT_TOKEN_HEADER, "*"));
+                    corsConfiguration.setExposedHeaders(List.of("Authorization", JWT_TOKEN_HEADER));
                     corsConfiguration.setAllowCredentials(true);
                     corsConfiguration.setMaxAge(3600L);
+                    urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
                     return corsConfiguration;
                 })
                 .and()

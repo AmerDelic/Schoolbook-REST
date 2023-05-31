@@ -41,11 +41,11 @@ public class JWTAuthFilter extends OncePerRequestFilter {
                 return;
             }
             String token = authHeader.substring(TOKEN_PREFIX.length());
-            String username = jwtProvider.getSubject(token);
             SecurityContext securityContext = SecurityContextHolder.getContext();
 
-            if (jwtProvider.isTokenValid(username, token) && securityContext.getAuthentication() == null) {
+            if (jwtProvider.isTokenValid(token) && securityContext.getAuthentication() == null) {
                 List<GrantedAuthority> authorities = jwtProvider.getAuthorities(token);
+                String username = jwtProvider.getSubject(token);
                 Authentication authentication = jwtProvider.getAuthentication(username, authorities, request);
                 securityContext.setAuthentication(authentication);
             } else {

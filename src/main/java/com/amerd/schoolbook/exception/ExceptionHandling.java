@@ -1,6 +1,8 @@
 package com.amerd.schoolbook.exception;
 
 import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +28,30 @@ import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
 @RestControllerAdvice
 public class ExceptionHandling {
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> exception(Exception ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.I_AM_A_TEAPOT, ex.getMessage());
+    }
+
     @ExceptionHandler
     public ResponseEntity<ErrorResponse> constraintViolationException(ConstraintViolationException ex) {
         log.error("", ex);
         StringBuilder stringBuilder = new StringBuilder();
         ex.getConstraintViolations().forEach(constraintViolation -> stringBuilder.append(constraintViolation.getMessage()));
         return createErrorResponse(HttpStatus.BAD_REQUEST, stringBuilder.toString());
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<ErrorResponse> tokenExpiredException(TokenExpiredException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(JWTVerificationException.class)
+    public ResponseEntity<ErrorResponse> jWTVerificationException(JWTVerificationException ex) {
+        log.error("", ex);
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(NoSuchMethodError.class)

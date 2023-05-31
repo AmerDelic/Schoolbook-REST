@@ -12,7 +12,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
@@ -62,9 +61,9 @@ public class JWTProvider {
         return token;
     }
 
-    public boolean isTokenValid(String username, String token) {
+    public boolean isTokenValid(String token) {
         JWTVerifier verifier = getVerifier();
-        return StringUtils.hasText(username) && !isTokenExpired(verifier, token);
+        return !isTokenExpired(verifier, token);
 
     }
 

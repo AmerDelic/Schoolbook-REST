@@ -38,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.ValidationException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import static com.amerd.schoolbook.common.constant.FileConstant.TEMP_PROFILE_IMAGE_BASE_ULR;
 
@@ -55,14 +54,13 @@ public class UserResource {
     private final RestTemplate restTemplate;
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> userCreate(@RequestBody UserCreationDto dto) throws IOException {
+    public ResponseEntity<UserResponseDto> userCreate(@RequestBody UserCreationDto dto) throws IOException {
         User user = userService.create(dto);
-        return ResponseEntity.ok(new CustomHttpResponse<>(
-                userMapper.toResponseDto(user), String.format("Created new user. Public ID=[%s]", user.getPublicId())));
+        return ResponseEntity.ok(userMapper.toResponseDto(user));
     }
 
     @PostMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> userRegister(@RequestBody UserRegistrationDto dto) throws IOException {
+    public ResponseEntity<UserResponseDto> userRegister(@RequestBody UserRegistrationDto dto) throws IOException {
         User newUser = userService.register(dto);
 //        String emailResponse = emailService
 //                .subject("Welcome!")
@@ -70,35 +68,33 @@ public class UserResource {
 //                        StringUtils.hasText(newUser.getFirstName()) ? newUser.getFirstName() : newUser.getUsername()))
 //                .recipient(newUser.getEmail())
 //                .sendEmail();
-        return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(newUser), "email skipped"));
+        return ResponseEntity.ok(userMapper.toResponseDto(newUser));
     }
 
     @GetMapping(value = "/find/{user}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> getByUsername(@PathVariable("user") String username) {
+    public ResponseEntity<UserResponseDto> getByUsername(@PathVariable("user") String username) {
         User user = userService.findByUsernameOrThrow(username);
-        return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(user), "Retrieved user"));
+        return ResponseEntity.ok(userMapper.toResponseDto(user));
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     //@PreAuthorize("hasAuthority('user:update')")
-    public ResponseEntity<CustomHttpResponse<CustomPage<UserResponseDto>>> getAll(Pageable pageable) {
+    public ResponseEntity<CustomPage<UserResponseDto>> getAll(Pageable pageable) {
         CustomPage<UserResponseDto> users = userService.getAllUsersPaged(pageable);
-        return ResponseEntity.ok(new CustomHttpResponse<>(users, "All users"));
+        return ResponseEntity.ok(users);
     }
 
     @PutMapping(value = "/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> userUpdate(
+    public ResponseEntity<UserResponseDto> userUpdate(
             @PathVariable("username") String username,
             @RequestBody UserUpdateDto dto)
             throws IOException {
         User updatedUser = userService.update(username, dto);
-        return ResponseEntity.ok(new CustomHttpResponse<>(
-                userMapper.toResponseDto(updatedUser),
-                String.format("User [%s] updated", updatedUser.getUsername())));
+        return ResponseEntity.ok(userMapper.toResponseDto(updatedUser));
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> login(@RequestBody JsonNode request) {
+    public ResponseEntity<UserResponseDto> login(@RequestBody JsonNode request) {
         if (!request.hasNonNull(User.Fields.username)) throw new ValidationException("Username required");
         if (!request.hasNonNull(User.Fields.password)) throw new ValidationException("Password required");
         String username = request.get(User.Fields.username).asText();
@@ -107,13 +103,13 @@ public class UserResource {
         User loggedUser = userService.findByUsernameOrThrow(username);
         UserPrincipal userPrincipal = new UserPrincipal(loggedUser);
         HttpHeaders jwtHeader = getJwtHeader(userPrincipal);
-        return new ResponseEntity<>(new CustomHttpResponse<>(
-                userMapper.toResponseDto(loggedUser), "Logged in"), jwtHeader, HttpStatus.OK);
+        return new ResponseEntity<>(userMapper.toResponseDto(loggedUser), jwtHeader, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") String id) { //TODO: try auto casting to long
-        return ResponseEntity.ok(userService.delete(Long.parseLong(id)));
+    public ResponseEntity<CustomHttpResponse<String>> delete(@PathVariable("id") String id) {
+        userService.delete(Long.parseLong(id));
+        return ResponseEntity.ok(new CustomHttpResponse<>(String.format("Deleted user id=[%s]", id)));
     }
 
     @PostMapping("/reset")
@@ -129,11 +125,11 @@ public class UserResource {
 
     //    @PreAuthorize("#username.equalsIgnoreCase(authentication.name)")
     @PostMapping(value = "/profile/image", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CustomHttpResponse<UserResponseDto>> updateProfileImage(
+    public ResponseEntity<UserResponseDto> updateProfileImage(
             @RequestParam("username") String username,
             @RequestParam("profileImage") MultipartFile profileImage) throws IOException {
         User user = userService.updateProfileImage(username, profileImage);
-        return ResponseEntity.ok(new CustomHttpResponse<>(userMapper.toResponseDto(user), "Profile image updated"));
+        return ResponseEntity.ok(userMapper.toResponseDto(user));
     }
 
     @GetMapping(value = "/profile/image/{username}.jpg", produces = MediaType.IMAGE_JPEG_VALUE)

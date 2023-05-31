@@ -19,4 +19,10 @@ public class CustomHttpResponse<T> {
         this.message = message;
         this.timestamp = LocalDateTime.now();
     }
+
+    public CustomHttpResponse(String message) {
+        this.resource = null;
+        this.message = message;
+        this.timestamp = LocalDateTime.now();
+    }
 }
