@@ -38,7 +38,10 @@ public class ExceptionHandling {
     public ResponseEntity<ErrorResponse> constraintViolationException(ConstraintViolationException ex) {
         log.error("", ex);
         StringBuilder stringBuilder = new StringBuilder();
-        ex.getConstraintViolations().forEach(constraintViolation -> stringBuilder.append(constraintViolation.getMessage()));
+        ex.getConstraintViolations().forEach(constraintViolation -> {
+            stringBuilder.append(constraintViolation.getMessage());
+            stringBuilder.append(".\n");
+        });
         return createErrorResponse(HttpStatus.BAD_REQUEST, stringBuilder.toString());
     }
 
