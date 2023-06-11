@@ -3,7 +3,8 @@ package com.amerd.schoolbook.exception;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,20 +19,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import static com.amerd.schoolbook.exception.ErrorResponse.createErrorResponse;
-
-@Slf4j
 @RestControllerAdvice
 public class ExceptionHandling {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> exception(Exception ex) {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> userNotFoundException(UserNotFoundException ex) {
         log.error("", ex);
-        return createErrorResponse(HttpStatus.I_AM_A_TEAPOT, ex.getMessage());
+        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler
@@ -130,4 +131,16 @@ public class ExceptionHandling {
         return createErrorResponse(HttpStatus.BAD_REQUEST, String.valueOf(messages));
     }
 
+    private ResponseEntity<ErrorResponse> createErrorResponse(HttpStatus httpStatus, String message) {
+        ErrorResponse errorResponse = ErrorResponse
+                .builder()
+                .message(message)
+                .status(httpStatus.value())
+                .reason(httpStatus.getReasonPhrase())
+                .timeStamp(LocalDateTime.now())
+                .build();
+        ResponseEntity<ErrorResponse> errorResponseResponseEntity = new ResponseEntity<>(errorResponse, httpStatus);
+        log.error("Response: {}", errorResponseResponseEntity);
+        return errorResponseResponseEntity;
+    }
 }

@@ -12,7 +12,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
 import java.util.Map;
 
@@ -31,18 +30,6 @@ public class AppConfig {
         return builder
                 .requestFactory(HttpComponentsClientHttpRequestFactory::new)
                 .build();
-    }
-
-    @Bean
-    public CommonsRequestLoggingFilter logFilter() {
-        CommonsRequestLoggingFilter filter
-                = new CommonsRequestLoggingFilter();
-        filter.setIncludeQueryString(true);
-        filter.setIncludePayload(true);
-        filter.setMaxPayloadLength(10000);
-        filter.setIncludeHeaders(true);
-     //   filter.setAfterMessagePrefix("REQUEST DATA : ");
-        return filter;
     }
 
     @Bean
